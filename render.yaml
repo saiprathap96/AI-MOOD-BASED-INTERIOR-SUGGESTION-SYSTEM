@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ai-mood-furniture-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install && npm run build 2>/dev/null || true
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_MODULES_CACHE
+        value: "true"
+    routes:
+      - path: /
+        destination: /
