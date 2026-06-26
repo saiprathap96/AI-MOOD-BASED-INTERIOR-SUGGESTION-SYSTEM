@@ -1,0 +1,10 @@
+import { useContext } from 'react';
+import { ToastContext } from '../App';
+
+export default function useToast() {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastContext Provider (check that it is used inside App.jsx)');
+  }
+  return context;
+}

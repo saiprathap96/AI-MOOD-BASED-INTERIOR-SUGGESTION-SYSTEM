@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Get premium interior design mood board suggestions by Sri Venkata Sai Furniture Works. Standalone prototype." />
+  
+  <title>Sri Venkata Sai Furniture Works | Standalone AI Suggestion Tool</title>
+  
+  <!-- Tailwind CSS v3 CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#8B6914',      // Warm gold
+              cream: '#F5F0E8',     // Soft cream background
+              dark: '#2C1810',      // Deep brown/walnut
+              goldLight: '#C5A85C', // Lighter gold accent
+              sand: '#E6DEC9',      // Secondary cream tone
+              bgDark: '#1E100A',    // Pitch dark brown for dark mode bg
+              cardDark: '#2D1B13',  // Dark brown for cards
+              textMuted: '#8E8278', // Warm grey text
+            }
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            sans: ['"Outfit"', '"Inter"', 'sans-serif'],
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-out forwards',
+            'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { transform: 'translateY(15px)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- React 18 & Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F5F0E8;
+    }
+    .dark ::-webkit-scrollbar-track {
+      background: #1E100A;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(139, 105, 20, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(139, 105, 20, 0.6);
+    }
+    
+    /* Range Slider Styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      background: rgba(44, 24, 16, 0.1);
+      height: 8px;
+      border-radius: 9999px;
+    }
+    .dark input[type="range"]::-webkit-slider-runnable-track {
+      background: rgba(245, 240, 232, 0.1);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #8B6914;
+      height: 20px;
+      width: 20px;
+      border-radius: 9999px;
+      border: 2px solid #F5F0E8;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      margin-top: -6px;
+      transition: transform 150ms;
+    }
+    .dark input[type="range"]::-webkit-slider-thumb {
+      border-color: #1E100A;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+
+    /* Print styling */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        font-size: 12pt;
+      }
+      nav, footer, button, .no-print, .toast-container, .star-rating-form {
+        display: none !important;
+      }
+      .print-card {
+        background: transparent !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        page-break-inside: avoid;
+      }
+      .print-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 15px !important;
+      }
+      .print-title {
+        text-align: center;
+        border-bottom: 2px solid #8B6914;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+      .print-text-dark {
+        color: #000 !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-brand-cream text-brand-dark dark:bg-brand-bgDark dark:text-brand-cream min-h-screen flex flex-col font-sans transition-colors duration-300 antialiased">
+  
+  <div id="root" class="flex-grow flex flex-col"></div>
+
+  <!-- React code with Babel -->
+  <script type="text/babel">
+    const { useState, useEffect, createContext, useContext } = React;
+
+    // =========================================================================
+    // SVG Icons
+    // =========================================================================
+    const Icons = {
+      Armchair: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 11V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2m14 0a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2" />
+        </svg>
+      ),
+      Sparkles: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+      ),
+      ArrowRight: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
+      ),
+      Settings: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      Image: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      Star: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.246.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.77-.57-.372-1.81.588-1.81h4.906a1 1 0 00.95-.69l1.519-4.674z" />
+        </svg>
+      ),
+      Quote: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      ),
+      Sun: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+        </svg>
+      ),
+      Moon: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      ),
+      Menu: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      ),
+      X: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      ),
+      Copy: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+        </svg>
+      ),
+      Send: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+        </svg>
+      ),
+      FileText: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      RefreshCw: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17" />
+        </svg>
+      ),
+      Calendar: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      Trash2: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      ),
+      ChevronDown: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      ),
+      ChevronUp: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+        </svg>
+      ),
+      Filter: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+      ),
+      CheckCircle2: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      AlertTriangle: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      ),
+      Info: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      Database: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+        </svg>
+      ),
+      Flame: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      LayoutDashboard: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />
+        </svg>
+      ),
+      MapPin: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      Phone: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+      ),
+      Mail: ({ className = "w-5 h-5" }) => (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      ),
+    };
+
+    // =========================================================================
+    // Toast Context & Provider
+    // =========================================================================
+    const ToastContext = createContext(null);
+
+    function ToastProvider({ children }) {
+      const [toasts, setToasts] = useState([]);
+
+      const addToast = (message, type = 'success') => {
+        const id = Math.random().toString(36).substring(2, 9);
+        setToasts((prev) => [...prev, { id, message, type }]);
+        setTimeout(() => removeToast(id), 4000);
+      };
+
+      const removeToast = (id) => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      };
+
+      return (
+        <ToastContext.Provider value={{ addToast }}>
+          {children}
+          <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full no-print">
+            {toasts.map((toast) => (
+              <div 
+                key={toast.id} 
+                className={`flex items-center justify-between p-4 rounded-lg shadow-lg border animate-slide-up w-full ${
+                  toast.type === 'success' ? 'bg-white dark:bg-brand-cardDark border-l-4 border-brand-gold text-brand-dark dark:text-brand-cream' :
+                  toast.type === 'error' ? 'bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 text-red-800 dark:text-red-200' :
+                  'bg-blue-50 dark:bg-blue-950/30 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {toast.type === 'success' && <Icons.CheckCircle2 className="text-brand-gold shrink-0" />}
+                  {toast.type === 'error' && <Icons.AlertTriangle className="text-red-500 shrink-0" />}
+                  {toast.type === 'info' && <Icons.Info className="text-blue-500 shrink-0" />}
+                  <span className="text-sm font-medium">{toast.message}</span>
+                </div>
+                <button 
+                  onClick={() => removeToast(toast.id)} 
+                  className="text-brand-dark/40 hover:text-brand-dark dark:text-brand-cream/40 dark:hover:text-brand-cream p-1 rounded transition-colors ml-4"
+                >
+                  <Icons.X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </ToastContext.Provider>
+      );
+    }
+
+    const useToast = () => useContext(ToastContext);
+
+    // =========================================================================
+    // Static Seed Data
+    // =========================================================================
+    const initialSeedData = [
+      {
+        id: "seed-1",
+        roomType: "Living Room",
+        colourPreference: "Warm Terracotta and Cream",
+        budget: 120000,
+        recommendation: {
+          furnitureSet: [
+            { name: "SVS Teak Wood 3-Seater Sofa", material: "Solid Teak & Premium Fabric", price: 48000 },
+            { name: "Classic Wooden Coffee Table", material: "Teak Wood", price: 15000 },
+            { name: "Matching Teak Wood Armchair", material: "Solid Teak & Premium Fabric", price: 22000 },
+            { name: "SVS Premium TV Unit", material: "Teak Veneer & MDF", price: 28000 }
+          ],
+          colourStyleNotes: "A rich blend of warm terracotta accents against a neutral cream canvas, anchored by the deep natural grains of polished teak wood. This creates a cozy, inviting, and traditional yet modern setting.",
+          stylingTips: [
+            "Position the 3-seater sofa against the primary wall and place the TV unit directly opposite.",
+            "Add a textured cream rug under the coffee table to define the seating zone.",
+            "Use warm-toned overhead lighting (2700K) to highlight the rich amber tones of the teak wood."
+          ],
+          budgetSummary: {
+            totalCost: 113000,
+            remaining: 7000,
+            notes: "Excellent selection utilizing 94% of the budget. Remaining amount is perfect for decorative pillows or a small indoor plant."
+          }
+        },
+        rating: 5,
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: "seed-2",
+        roomType: "Bedroom",
+        colourPreference: "Olive Green and Gold",
+        budget: 85000,
+        recommendation: {
+          furnitureSet: [
+            { name: "SVS Royal King Size Bed", material: "Sheesham Wood", price: 42000 },
+            { name: "Dual Sheesham Bedside Tables", material: "Sheesham Wood", price: 12000 },
+            { name: "SVS Elegance 3-Door Wardrobe", material: "Engineered Wood & Laminate", price: 26000 }
+          ],
+          colourStyleNotes: "Olive green walls combined with brass or gold-finished accents create an organic, luxurious bedroom escape. The deep tones of Sheesham wood ground the space with earthy warmth.",
+          stylingTips: [
+            "Place the bed centered on the olive green accent wall.",
+            "Position the wardrobe in a corner to optimize floor space.",
+            "Use brass table lamps on the bedside tables to incorporate the gold accent theme."
+          ],
+          budgetSummary: {
+            totalCost: 80000,
+            remaining: 5000,
+            notes: "Comfortably within the ₹85,000 budget. The savings can cover bedding or matching curtains."
+          }
+        },
+        rating: 4,
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: "seed-3",
+        roomType: "Office",
+        colourPreference: "Midnight Blue and Walnut",
+        budget: 50000,
+        recommendation: {
+          furnitureSet: [
+            { name: "SVS Executive Walnut Desk", material: "Walnut Veneer & Steel Frame", price: 22000 },
+            { name: "Ergonomic Mesh Swivel Chair", material: "Nylon & Breathable Mesh", price: 12000 },
+            { name: "Walnut 4-Tier Bookshelf", material: "Walnut Veneer & Steel Frame", price: 13000 }
+          ],
+          colourStyleNotes: "Midnight blue creates a high-focus environment that minimizes distractions. Walnut furniture provides a warm, sophisticated professional look.",
+          stylingTips: [
+            "Place the desk near a window to receive natural light but avoid screen glare.",
+            "Use the bookshelf to organize folders and display personal achievements.",
+            "Add a small table lamp with a soft white LED on the desk for late-evening work."
+          ],
+          budgetSummary: {
+            totalCost: 47000,
+            remaining: 3000,
+            notes: "Under budget, allowing for organizer trays or cable management accessories."
+          }
+        },
+        rating: 5,
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: "seed-4",
+        roomType: "Dining Room",
+        colourPreference: "Teal and Natural Oak",
+        budget: 150000,
+        recommendation: {
+          furnitureSet: [
+            { name: "SVS Heritage 6-Seater Dining Table", material: "Teak Wood", price: 65000 },
+            { name: "SVS Cushioned Dining Chairs (Set of 6)", material: "Teak Wood & Velvet Fabric", price: 48000 },
+            { name: "SVS Premium Buffet Sideboard", material: "Teak Veneer & MDF", price: 32000 }
+          ],
+          colourStyleNotes: "Vibrant teal upholstery brings energy and style to family meals, beautifully contrasted by natural oak or polished teak wood grains.",
+          stylingTips: [
+            "Hang a warm-toned chandelier directly above the center of the dining table.",
+            "Use the sideboard buffet to store crockery and serve food during gatherings.",
+            "Keep the tabletop simple with a runners matching the teal chairs."
+          ],
+          budgetSummary: {
+            totalCost: 145000,
+            remaining: 5000,
+            notes: "Utilized ₹145,000. Under budget by ₹5,000 which is perfect for dining linen."
+          }
+        },
+        rating: 4,
+        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: "seed-5",
+        roomType: "Kitchen",
+        colourPreference: "Charcoal Grey and Rose Gold",
+        budget: 220000,
+        recommendation: {
+          furnitureSet: [
+            { name: "SVS Modular Island Cabinet", material: "BWP Plywood & Acrylic Finish", price: 95000 },
+            { name: "Rose Gold Accent Bar Stools (Set of 3)", material: "Steel with Rose Gold plating", price: 24000 },
+            { name: "SVS High-Capacity Pantry Unit", material: "BWP Plywood & Laminate", price: 85000 }
+          ],
+          colourStyleNotes: "Modern industrial luxury. Deep charcoal grey cabinet doors offset by gleaming rose gold handles and bar stools create an ultra-modern aesthetic.",
+          stylingTips: [
+            "Line the 3 bar stools along the kitchen island for casual dining.",
+            "Ensure task lighting is installed under the overhead cabinets.",
+            "Incorporate rose-gold utensil hangers or canisters on open shelves."
+          ],
+          budgetSummary: {
+            totalCost: 204000,
+            remaining: 16000,
+            notes: "Under budget by ₹16,000. Perfect for premium sink fixtures or storage trays."
+          }
+        },
+        rating: 5,
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+
+    // =========================================================================
+    // Client-Side Simulated AI Engine
+    // =========================================================================
+    const generateSimulatedSuggestion = (roomType, colourPreference, budget) => {
+      const parsedBudget = Number(budget) || 100000;
+      
+      const catalog = {
+        "Living Room": [
+          { name: "SVS Teak Wood Sofa Set", material: "Solid Teak Wood & Premium Fabric", priceFactor: 0.45 },
+          { name: "SVS Premium Coffee Table", material: "Sheesham Wood with Glass Inlay", priceFactor: 0.15 },
+          { name: "SVS Luxury Accent Lounge Chair", material: "Teak Wood & Upholstered Velvet", priceFactor: 0.2 },
+          { name: "SVS Elegance TV Media Unit", material: "Teak Veneer & High-Quality MDF", priceFactor: 0.2 }
+        ],
+        "Bedroom": [
+          { name: "SVS Classic Poster Bed Frame", material: "Solid Teak Wood", priceFactor: 0.45 },
+          { name: "SVS Modern Bedside Lockers (Pair)", material: "Sheesham Wood", priceFactor: 0.15 },
+          { name: "SVS Royal Wardrobe", material: "Teak Plywood & Laminate Finish", priceFactor: 0.3 },
+          { name: "SVS Comfort Dressing Mirror Table", material: "Solid Wood & Mirror Glass", priceFactor: 0.1 }
+        ],
+        "Office": [
+          { name: "SVS Solid Walnut Study/Work Desk", material: "Walnut Wood & Steel Base", priceFactor: 0.4 },
+          { name: "SVS Ergonomic Spine-Support Chair", material: "Pneumatic Lift & Breathable Mesh", priceFactor: 0.25 },
+          { name: "SVS Library Bookshelf Cabinet", material: "Walnut Veneer & Glass Doors", priceFactor: 0.25 },
+          { name: "SVS Mobile Filing Cabinet drawers", material: "Engineered Wood", priceFactor: 0.1 }
+        ],
+        "Dining Room": [
+          { name: "SVS Royal Dining Table", material: "Solid Teak Wood Top", priceFactor: 0.45 },
+          { name: "SVS Matching Dining Chairs (Set of 6)", material: "Solid Teak & Cushioned Seat", priceFactor: 0.35 },
+          { name: "SVS Dining Room Crockery Console", material: "Teak Wood Veneer", priceFactor: 0.2 }
+        ],
+        "Kitchen": [
+          { name: "SVS Modular Counter Storage Set", material: "Marine Grade Plywood & Acrylic Finish", priceFactor: 0.5 },
+          { name: "SVS Tall Kitchen Pantry Cabinet", material: "Marine Grade Plywood & Laminate", priceFactor: 0.35 },
+          { name: "SVS Swivel Counter Breakfast Stools (Set of 2)", material: "Steel frame & Leather upholstery", priceFactor: 0.15 }
+        ]
+      };
+
+      const selectedSet = catalog[roomType] || catalog["Living Room"];
+      
+      let totalCost = 0;
+      const furnitureSet = selectedSet.map((item) => {
+        let price = Math.round(parsedBudget * item.priceFactor);
+        price = Math.round(price / 100) * 100;
+        if (price < 3000) price = 3000;
+        totalCost += price;
+        return { name: item.name, material: item.material, price };
+      });
+
+      if (totalCost > parsedBudget) {
+        const scaleFactor = (parsedBudget * 0.95) / totalCost;
+        totalCost = 0;
+        furnitureSet.forEach(item => {
+          item.price = Math.round((item.price * scaleFactor) / 100) * 100;
+          if (item.price < 2000) item.price = 2000;
+          totalCost += item.price;
+        });
+      }
+
+      const remaining = parsedBudget - totalCost;
+      const colorText = colourPreference || "Earth tones";
+
+      return {
+        furnitureSet,
+        colourStyleNotes: `The design utilizes your preferred ${colorText} color scheme to elevate the natural charm of the solid wooden pieces. For a ${roomType}, we focus on balancing functional storage and comfortable seating. The warm tones of teak or sheesham wood interact perfectly with ${colorText} paint accents, resulting in an upscale, personalized environment designed specifically by Sri Venkata Sai Furniture Works.`,
+        stylingTips: [
+          `Anchor the room by making the ${furnitureSet[0].name} the focal point of the layout.`,
+          `Incorporate secondary light sources (like accent floor lamps or shelf LED strips) to enhance the warm hues of the ${colorText} palette.`,
+          `Accessorize using soft cotton or linen textiles that echo the natural materials of the furniture.`
+        ],
+        budgetSummary: {
+          totalCost,
+          remaining,
+          notes: `We successfully created a complete ${roomType} suggestion utilizing ₹${totalCost.toLocaleString('en-IN')} out of your ₹${parsedBudget.toLocaleString('en-IN')} budget, leaving a balance of ₹${remaining.toLocaleString('en-IN')} which is perfect for transport, assembly, or matching curtains.`
+        }
+      };
+    };
+
+    // =========================================================================
+    // SVG Charts (Ported from modular React component)
+    // =========================================================================
+    function BarChart({ data }) {
+      if (!data || data.length === 0) return <p className="text-center py-4 text-xs text-brand-textMuted">No data to display</p>;
+      const maxVal = Math.max(...data.map(d => d.count), 1);
+      const chartHeight = data.length * 50;
+
+      return (
+        <svg width="100%" height={chartHeight} viewBox={`0 0 500 ${chartHeight}`} className="font-sans">
+          {data.map((item, idx) => {
+            const barWidth = (item.count / maxVal) * 320;
+            const y = idx * 50 + 10;
+            return (
+              <g key={item.name} className="group cursor-pointer">
+                <text x="10" y={y + 17} className="text-xs font-semibold fill-brand-dark dark:fill-brand-cream/80">{item.name}</text>
+                <rect x="130" y={y} width="320" height="24" rx="4" className="fill-brand-dark/5 dark:fill-brand-cream/5" />
+                <rect x="130" y={y} width={barWidth || 5} height="24" rx="4" className="fill-brand-gold transition-all duration-700 ease-out hover:fill-brand-goldLight" />
+                <text x={130 + barWidth + 10} y={y + 17} className="text-xs font-bold fill-brand-gold">{item.count}</text>
+              </g>
+            );
+          })}
+        </svg>
+      );
+    }
+
+    function DonutChart({ data }) {
+      if (!data || data.length === 0) return <p className="text-center py-4 text-xs text-brand-textMuted">No data to display</p>;
+      const total = data.reduce((sum, item) => sum + item.value, 0);
+      if (total === 0) return <p className="text-center py-4 text-xs text-brand-textMuted">No data to display</p>;
+
+      const radius = 55;
+      const strokeWidth = 18;
+      const circ = 2 * Math.PI * radius;
+      const center = 80;
+      const colors = ['#8B6914', '#2C1810', '#C5A85C', '#E6DEC9'];
+
+      let accumulatedPercent = 0;
+      const slices = data.map((item, idx) => {
+        const percent = item.value / total;
+        const strokeLength = percent * circ;
+        const strokeOffset = circ - (accumulatedPercent * circ);
+        accumulatedPercent += percent;
+        return {
+          ...item,
+          strokeLength,
+          strokeOffset,
+          color: colors[idx % colors.length],
+          percentage: Math.round(percent * 100)
+        };
+      });
+
+      return (
+        <div className="flex flex-col sm:flex-row items-center justify-around gap-6 py-4">
+          <div className="relative w-40 h-40">
+            <svg width="100%" height="100%" viewBox="0 0 160 160" className="-rotate-90">
+              <circle cx={center} cy={center} r={radius} fill="transparent" stroke="rgba(0,0,0,0.03)" strokeWidth={strokeWidth} />
+              {slices.map((slice) => (
+                slice.value > 0 && (
+                  <circle
+                    key={slice.label}
+                    cx={center}
+                    cy={center}
+                    r={radius}
+                    fill="transparent"
+                    stroke={slice.color}
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={`${slice.strokeLength} ${circ}`}
+                    strokeDashoffset={slice.strokeOffset}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-out hover:opacity-90"
+                  />
+                )
+              ))}
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-xl font-serif font-bold text-brand-dark dark:text-brand-cream">{total}</span>
+              <span className="text-[9px] uppercase tracking-wider text-brand-textMuted">Total Sets</span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            {slices.map((slice) => (
+              <div key={slice.label} className="flex items-center gap-3 text-xs">
+                <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: slice.color }}></span>
+                <span className="font-medium text-brand-dark/80 dark:text-brand-cream/80">{slice.label}:</span>
+                <span className="font-bold text-brand-dark dark:text-brand-cream">{slice.value} ({slice.percentage}%)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function LineChart({ data }) {
+      if (!data || data.length === 0) return <p className="text-center py-4 text-xs text-brand-textMuted">No data to display</p>;
+      const maxVal = Math.max(...data.map(d => d.count), 2);
+      
+      const width = 500;
+      const height = 180;
+      const paddingX = 40;
+      const paddingY = 20;
+      const chartWidth = width - paddingX * 2;
+      const chartHeight = height - paddingY * 2;
+
+      const points = data.map((item, idx) => {
+        const x = paddingX + (idx / (data.length - 1)) * chartWidth;
+        const y = paddingY + chartHeight - (item.count / maxVal) * chartHeight;
+        return { x, y, label: item.label, count: item.count };
+      });
+
+      const linePath = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+      const areaPath = `${linePath} L ${points[points.length - 1].x} ${height - paddingY} L ${points[0].x} ${height - paddingY} Z`;
+
+      return (
+        <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="font-sans">
+          <defs>
+            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#8B6914" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#8B6914" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+          {[0, 0.5, 1].map((ratio) => {
+            const y = paddingY + chartHeight * ratio;
+            const gridLabel = Math.round(maxVal * (1 - ratio));
+            return (
+              <g key={ratio}>
+                <line x1={paddingX} y1={y} x2={width - paddingX} y2={y} className="stroke-brand-dark/10 dark:stroke-brand-cream/10" strokeDasharray="4 4" />
+                <text x={paddingX - 10} y={y + 4} textAnchor="end" className="text-[10px] fill-brand-textMuted font-bold">{gridLabel}</text>
+              </g>
+            );
+          })}
+          <path d={areaPath} fill="url(#chartGradient)" />
+          <path d={linePath} fill="transparent" stroke="#8B6914" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          {points.map((p, idx) => (
+            <g key={idx} className="group">
+              <circle cx={p.x} cy={p.y} r="8" className="fill-brand-gold/0 group-hover:fill-brand-gold/20 transition-all cursor-pointer" />
+              <circle cx={p.x} cy={p.y} r="4.5" className="fill-brand-cream stroke-brand-gold stroke-2 dark:fill-brand-bgDark transition-transform group-hover:scale-125 cursor-pointer" />
+              <g className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <rect x={p.x - 18} y={p.y - 28} width="36" height="20" rx="4" className="fill-brand-dark dark:fill-brand-cream" />
+                <text x={p.x} y={p.y - 15} textAnchor="middle" className="text-[10px] font-bold fill-brand-cream dark:fill-brand-dark">{p.count}</text>
+              </g>
+              <text x={p.x} y={height - 2} textAnchor="middle" className="text-[10px] fill-brand-textMuted font-medium">{p.label}</text>
+            </g>
+          ))}
+        </svg>
+      );
+    }
+
+    // =========================================================================
+    // Pages / Sections
+    // =========================================================================
+
+    // 1. HOME PAGE
+    function Home({ navigate }) {
+      const steps = [
+        {
+          num: '01',
+          title: 'Define Your Spaces',
+          desc: 'Select your target room type, name your preferred color combination, and state your investment limit in Indian Rupees (₹).',
+          icon: <Icons.Settings className="w-5 h-5 text-brand-gold" />
+        },
+        {
+          num: '02',
+          title: 'AI Concept Curation',
+          desc: 'Our design algorithm parses wood textures, complementary pieces, and market prices to craft a custom room set.',
+          icon: <Icons.Sparkles className="w-5 h-5 text-brand-gold" />
+        },
+        {
+          num: '03',
+          title: 'Review Your Mood Board',
+          desc: 'Inspect furniture models, download printable reports, rate quality, and share directly via WhatsApp with family.',
+          icon: <Icons.Image className="w-5 h-5 text-brand-gold" />
+        }
+      ];
+
+      const testimonials = [
+        {
+          name: 'Ananya Rao',
+          role: 'Homeowner, Hyderabad',
+          text: 'Sri Venkata Sai Furniture completely transformed my living room. The AI suggested a gorgeous teak wood set with olive green notes that fit my budget perfectly. The craftsmanship is flawless!',
+          rating: 5
+        },
+        {
+          name: 'Vikram Krishnan',
+          role: 'Interior Enthusiast, Bangalore',
+          text: 'Having the ability to instantly generate complete room sets based on budget constraints is a game-changer. The styling notes and budget breakdown were incredibly detailed and professional.',
+          rating: 5
+        },
+        {
+          name: 'Ravi Teja',
+          role: 'Office Manager, Vizag',
+          text: 'We used the AI tool to set up our new branch office. The walnut desk and ergonomic chair suggestion was spot on. Highly recommended for quick and accurate furniture planning!',
+          rating: 4
+        }
+      ];
+
+      return (
+        <div className="space-y-24">
+          <section className="relative overflow-hidden pt-12 md:pt-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center space-y-8 max-w-4xl mx-auto">
+                <div className="inline-flex items-center gap-2 bg-brand-gold/10 text-brand-gold border border-brand-gold/30 px-4.5 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase animate-fade-in shadow-sm">
+                  <Icons.Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                  <span>Next-Gen Interior Curation</span>
+                </div>
+                <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-brand-dark dark:text-brand-cream tracking-tight leading-[1.1] animate-slide-up">
+                  Elevating Indian Homes with Legacy Woodcraft & <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold to-brand-goldLight dark:from-brand-goldLight dark:to-brand-sand">AI Curation</span>
+                </h1>
+                <p className="text-base sm:text-lg text-brand-dark/70 dark:text-brand-cream/70 max-w-2xl mx-auto leading-relaxed font-sans">
+                  Discover customized furniture mood boards tailored by AI, drawing from our legacy of solid wood craftsmanship at Sri Venkata Sai Furniture Works.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 animate-fade-in">
+                  <button
+                    onClick={() => navigate('tool')}
+                    className="w-full sm:w-auto bg-brand-gold hover:bg-brand-goldLight text-brand-cream font-medium px-8 py-4 rounded-xl shadow-lg hover:shadow-brand-gold/20 flex items-center justify-center gap-2.5 transition-all active:scale-[0.98]"
+                  >
+                    <span>Get Your AI Furniture Suggestion</span>
+                    <Icons.ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => navigate('history')}
+                    className="w-full sm:w-auto border border-brand-dark/20 hover:border-brand-dark dark:border-brand-cream/20 dark:hover:border-brand-cream font-medium px-8 py-4 rounded-xl flex items-center justify-center gap-2.5 transition-colors"
+                  >
+                    <span>View Past Suggestions</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-brand-dark/5 dark:bg-brand-cream/5 rounded-3xl p-8 md:p-12 border border-brand-dark/5 dark:border-brand-cream/5">
+              <div className="text-center space-y-4 mb-16">
+                <h2 className="font-serif text-3xl font-bold text-brand-dark dark:text-brand-cream">How AI Interior Curation Works</h2>
+                <p className="text-sm text-brand-textMuted max-w-md mx-auto">Three simple steps to curate your dream space using Sri Venkata Sai Furniture Works technology.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {steps.map((step) => (
+                  <div key={step.num} className="bg-white dark:bg-brand-cardDark p-8 rounded-2xl border border-brand-dark/5 dark:border-brand-cream/5 hover:border-brand-gold/30 dark:hover:border-brand-gold/30 hover:shadow-md transition-all group">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="bg-brand-gold/10 p-3.5 rounded-xl group-hover:bg-brand-gold group-hover:text-brand-cream transition-colors text-brand-gold">
+                        {step.icon}
+                      </div>
+                      <span className="text-3xl font-serif font-black text-brand-gold/20 tracking-wider">{step.num}</span>
+                    </div>
+                    <h3 className="text-lg font-serif font-bold text-brand-dark dark:text-brand-cream mb-3">{step.title}</h3>
+                    <p className="text-sm leading-relaxed text-brand-dark/70 dark:text-brand-cream/70">{step.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="space-y-16">
+              <div className="text-center space-y-4">
+                <h2 className="font-serif text-3xl font-bold text-brand-dark dark:text-brand-cream">Word from Our Customers</h2>
+                <p className="text-sm text-brand-textMuted max-w-md mx-auto">Real opinions from home decorators who trusted SVS Furniture.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {testimonials.map((t, idx) => (
+                  <div key={idx} className="bg-white dark:bg-brand-cardDark p-8 rounded-2xl border border-brand-dark/5 dark:border-brand-cream/5 shadow-sm flex flex-col justify-between relative group">
+                    <Icons.Quote className="absolute top-4 right-4 w-8 h-8 text-brand-gold/10 group-hover:text-brand-gold/20 transition-colors" />
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Icons.Star key={i} className={`w-4 h-4 ${i < t.rating ? 'fill-brand-gold text-brand-gold' : 'text-brand-dark/25 dark:text-brand-cream/25'}`} />
+                        ))}
+                      </div>
+                      <p className="text-sm italic leading-relaxed text-brand-dark/80 dark:text-brand-cream/80">"{t.text}"</p>
+                    </div>
+                    <div className="border-t border-brand-dark/15 dark:border-brand-cream/15 pt-6 mt-6 flex items-center justify-between">
+                      <div>
+                        <h4 className="font-serif text-sm font-bold text-brand-dark dark:text-brand-cream">{t.name}</h4>
+                        <span className="text-xs text-brand-textMuted">{t.role}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    // 2. SUGGESTION TOOL PAGE
+    function SuggestionTool({ navigate, onSave }) {
+      const { addToast } = useToast();
+      const [roomType, setRoomType] = useState('Living Room');
+      const [colourPreference, setColourPreference] = useState('');
+      const [budget, setBudget] = useState(150000);
+      
+      const [loading, setLoading] = useState(false);
+      const [suggestion, setSuggestion] = useState(null);
+      const [errors, setErrors] = useState({});
+      const [rating, setRating] = useState(0);
+      const [hoverRating, setHoverRating] = useState(0);
+
+      const presets = [
+        { label: '🛋️ Royal Living', room: 'Living Room', color: 'Terracotta and Cream', budget: 250000 },
+        { label: '🛏️ Olive Bed', room: 'Bedroom', color: 'Olive Green and Gold', budget: 90000 },
+        { label: '💼 Walnut Office', room: 'Office', color: 'Midnight Blue and Walnut', budget: 60000 },
+        { label: '🍳 Modern Kitchen', room: 'Kitchen', color: 'Charcoal and Rose Gold', budget: 300000 }
+      ];
+
+      const colorSuggestions = [
+        'Warm Beige & Dark Walnut',
+        'Sage Green & Oak Wood',
+        'Midnight Blue & Brass',
+        'Blush Pink & Neutral Grey',
+        'Teal & Natural Ash'
+      ];
+
+      const handleApplyPreset = (p) => {
+        setRoomType(p.room);
+        setColourPreference(p.color);
+        setBudget(p.budget);
+        setErrors({});
+        addToast(`Preset "${p.label}" loaded!`, 'info');
+      };
+
+      const validateForm = () => {
+        const newErrors = {};
+        if (!roomType) newErrors.roomType = 'Please select a room type.';
+        if (!colourPreference.trim()) newErrors.colourPreference = 'Colour preferences are required.';
+        if (!budget || isNaN(budget) || Number(budget) < 15000) newErrors.budget = 'Budget must be at least ₹15,000.';
+        if (Number(budget) > 5000000) newErrors.budget = 'Budget cannot exceed ₹50,00,000.';
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+      };
+
+      const handleGenerate = (e) => {
+        if (e) e.preventDefault();
+        if (!validateForm()) {
+          addToast('Please fix the errors in the form.', 'error');
+          return;
+        }
+
+        setLoading(true);
+        setSuggestion(null);
+        setRating(0);
+
+        setTimeout(() => {
+          const rec = generateSimulatedSuggestion(roomType, colourPreference, budget);
+          const newSuggestion = {
+            id: 'gen-' + Date.now(),
+            roomType,
+            colourPreference,
+            budget: Number(budget),
+            recommendation: rec,
+            rating: null,
+            createdAt: new Date().toISOString()
+          };
+
+          setSuggestion(newSuggestion);
+          onSave(newSuggestion);
+          setLoading(false);
+          addToast('Mood board generated successfully!', 'success');
+        }, 1500);
+      };
+
+      const handleCopyToClipboard = () => {
+        if (!suggestion) return;
+        const rec = suggestion.recommendation;
+        const itemsText = rec.furnitureSet.map(item => `- ${item.name} (${item.material}): ₹${item.price.toLocaleString('en-IN')}`).join('\n');
+        
+        const textToCopy = `=== SRI VENKATA SAI FURNITURE WORKS ===
+AI Interior Mood Board Recommendation
+Room Type: ${suggestion.roomType}
+Colour Theme: ${suggestion.colourPreference}
+Budget Limit: ₹${suggestion.budget.toLocaleString('en-IN')}
+
+RECOMMENDED SET:
+${itemsText}
+
+COLOUR & STYLE NOTES:
+${rec.colourStyleNotes}
+
+STYLING TIPS:
+${rec.stylingTips.map((tip, idx) => `${idx + 1}. ${tip}`).join('\n')}
+
+BUDGET SUMMARY:
+Total Estimated Cost: ₹${rec.budgetSummary.totalCost.toLocaleString('en-IN')}
+Remaining Balance: ₹${rec.budgetSummary.remaining.toLocaleString('en-IN')}
+Notes: ${rec.budgetSummary.notes}
+===================================`;
+
+        navigator.clipboard.writeText(textToCopy)
+          .then(() => addToast('Copied to clipboard!', 'success'))
+          .catch(() => addToast('Failed to copy text.', 'error'));
+      };
+
+      const handleWhatsAppShare = () => {
+        if (!suggestion) return;
+        const rec = suggestion.recommendation;
+        const message = `*Sri Venkata Sai Furniture Works - AI Mood Board* 🛋️✨
+I just designed my dream *${suggestion.roomType}*!
+
+🎨 *Colour Theme:* ${suggestion.colourPreference}
+💰 *Budget Limit:* ₹${suggestion.budget.toLocaleString('en-IN')}
+💵 *Estimated Cost:* ₹${rec.budgetSummary.totalCost.toLocaleString('en-IN')}
+
+*Recommended Furniture:*
+${rec.furnitureSet.map(i => `• ${i.name} - ₹${i.price.toLocaleString('en-IN')}`).join('\n')}
+
+_Generated via SVS AI interior consultant_`;
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+      };
+
+      const handleDownloadPDF = () => {
+        window.print();
+      };
+
+      const submitRating = (val) => {
+        setRating(val);
+        suggestion.rating = val;
+        
+        const stored = localStorage.getItem('svs_history');
+        if (stored) {
+          const list = JSON.parse(stored);
+          const index = list.findIndex(item => item.id === suggestion.id);
+          if (index !== -1) {
+            list[index].rating = val;
+            localStorage.setItem('svs_history', JSON.stringify(list));
+          }
+        }
+        addToast('Thank you for your rating!', 'success');
+      };
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center md:text-left space-y-2 mb-10 no-print">
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-brand-dark dark:text-brand-cream">AI Suggestion Tool</h1>
+            <p className="text-sm text-brand-textMuted">Specify your room settings, and let our designer AI compile the perfect matching furniture collection.</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Preferences Form */}
+            <div className="lg:col-span-4 space-y-6 no-print">
+              <div className="bg-white dark:bg-brand-cardDark p-6 rounded-2xl border border-brand-dark/10 dark:border-brand-cream/10 shadow-sm space-y-4">
+                <span className="block text-xs font-bold uppercase tracking-wider text-brand-textMuted">Template Presets</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {presets.map((p, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleApplyPreset(p)}
+                      className="px-3 py-2 text-xs font-semibold rounded-lg bg-brand-cream/60 dark:bg-brand-bgDark border border-brand-dark/5 dark:border-brand-cream/5 hover:border-brand-gold/40 dark:hover:border-brand-gold/40 hover:bg-brand-cream dark:hover:bg-brand-cardDark text-left transition-colors"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <form onSubmit={handleGenerate} className="bg-white dark:bg-brand-cardDark p-6 sm:p-8 rounded-2xl border border-brand-dark/10 dark:border-brand-cream/10 shadow-sm space-y-6">
+                <div className="space-y-2">
+                  <label htmlFor="room-type" className="block text-sm font-semibold text-brand-dark dark:text-brand-cream">Room Type</label>
+                  <select
+                    id="room-type"
+                    value={roomType}
+                    onChange={(e) => setRoomType(e.target.value)}
+                    className="w-full rounded-xl border border-brand-dark/20 dark:border-brand-cream/20 bg-transparent px-4 py-3 text-sm focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all dark:bg-brand-cardDark"
+                  >
+                    <option value="Living Room">Living Room</option>
+                    <option value="Bedroom">Bedroom</option>
+                    <option value="Office">Office</option>
+                    <option value="Dining Room">Dining Room</option>
+                    <option value="Kitchen">Kitchen</option>
+                  </select>
+                  {errors.roomType && <p className="text-xs text-red-500">{errors.roomType}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="color-preference" className="block text-sm font-semibold text-brand-dark dark:text-brand-cream">Colour Preference</label>
+                  <input
+                    id="color-preference"
+                    type="text"
+                    value={colourPreference}
+                    onChange={(e) => setColourPreference(e.target.value)}
+                    placeholder="e.g. Sage green with oak highlights"
+                    className="w-full rounded-xl border border-brand-dark/20 dark:border-brand-cream/20 bg-transparent px-4 py-3 text-sm focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all dark:bg-brand-cardDark"
+                  />
+                  <div className="flex flex-wrap gap-1.5 pt-1.5">
+                    {colorSuggestions.map((color, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setColourPreference(color)}
+                        className="text-[10px] font-medium text-brand-gold bg-brand-gold/10 hover:bg-brand-gold/20 px-2 py-1 rounded transition-colors"
+                      >
+                        +{color}
+                      </button>
+                    ))}
+                  </div>
+                  {errors.colourPreference && <p className="text-xs text-red-500">{errors.colourPreference}</p>}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="budget" className="block text-sm font-semibold text-brand-dark dark:text-brand-cream">Budget (in ₹)</label>
+                    <span className="text-sm font-bold text-brand-gold bg-brand-gold/10 px-2.5 py-1 rounded-md">₹{Number(budget).toLocaleString('en-IN')}</span>
+                  </div>
+                  <input
+                    id="budget"
+                    type="number"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    min="15000"
+                    max="5000000"
+                    className="w-full rounded-xl border border-brand-dark/20 dark:border-brand-cream/20 bg-transparent px-4 py-3 text-sm focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all dark:bg-brand-cardDark [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <input
+                    type="range"
+                    min="15000"
+                    max="500000"
+                    step="5000"
+                    value={budget > 500000 ? 500000 : budget}
+                    onChange={(e) => setBudget(Number(e.target.value))}
+                    className="w-full"
+                    aria-label="Budget slider"
+                  />
+                  <div className="flex justify-between text-[10px] text-brand-textMuted font-semibold">
+                    <span>₹15,000</span>
+                    <span>₹5,00,000+</span>
+                  </div>
+                  {errors.budget && <p className="text-xs text-red-500">{errors.budget}</p>}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-brand-dark hover:bg-brand-dark/90 dark:bg-brand-gold dark:hover:bg-brand-goldLight text-brand-cream font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2.5 active:scale-[0.98] disabled:opacity-50"
+                >
+                  <Icons.Sparkles className="w-4 h-4 shrink-0" />
+                  <span>Generate My Room Set</span>
+                </button>
+              </form>
+            </div>
+
+            {/* Suggestions Output */}
+            <div className="lg:col-span-8">
+              
+              {/* Skeleton loading screen */}
+              {loading && (
+                <div className="w-full bg-white dark:bg-brand-cardDark border border-brand-dark/10 dark:border-brand-cream/10 rounded-2xl shadow-xl overflow-hidden animate-pulse">
+                  <div className="bg-brand-gold/10 p-6 flex flex-col sm:flex-row items-center justify-between border-b border-brand-dark/10 dark:border-brand-cream/10 gap-4">
+                    <div className="space-y-2 text-center sm:text-left">
+                      <div className="h-6 w-48 bg-brand-gold/20 rounded-md mx-auto sm:mx-0"></div>
+                      <div className="h-4 w-32 bg-brand-dark/10 dark:bg-brand-cream/10 rounded-md mx-auto sm:mx-0"></div>
+                    </div>
+                    <div className="flex items-center gap-2 text-brand-gold bg-brand-gold/5 px-4 py-2 rounded-full border border-brand-gold/20">
+                      <Icons.Sparkles className="w-4 h-4 animate-spin" />
+                      <span className="text-sm font-semibold tracking-wide">Designing your space...</span>
+                    </div>
+                  </div>
+                  <div className="p-6 sm:p-8 space-y-8">
+                    <div>
+                      <div className="h-6 w-60 bg-brand-dark/15 dark:bg-brand-cream/15 rounded-md mb-4"></div>
+                      <div className="border border-brand-dark/10 dark:border-brand-cream/10 rounded-xl overflow-hidden">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="flex justify-between p-4 border-b last:border-b-0 bg-brand-cream/10 dark:bg-brand-bgDark/15">
+                            <div className="space-y-2">
+                              <div className="h-5 w-40 sm:w-56 bg-brand-dark/15 dark:bg-brand-cream/15 rounded-md"></div>
+                              <div className="h-4 w-24 bg-brand-dark/10 dark:bg-brand-cream/10 rounded-sm"></div>
+                            </div>
+                            <div className="h-5 w-20 bg-brand-gold/20 rounded-md self-center"></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state illustration */}
+              {!loading && !suggestion && (
+                <div className="bg-white dark:bg-brand-cardDark border border-brand-dark/10 dark:border-brand-cream/10 rounded-2xl shadow-sm p-12 text-center space-y-6 flex flex-col items-center justify-center min-h-[450px]">
+                  <div className="w-20 h-20 rounded-full bg-brand-gold/10 flex items-center justify-center text-brand-gold">
+                    <Icons.Armchair className="w-10 h-10" />
+                  </div>
+                  <div className="space-y-2 max-w-sm">
+                    <h3 className="font-serif text-xl font-bold text-brand-dark dark:text-brand-cream">Your Mood Board Awaits</h3>
+                    <p className="text-sm text-brand-textMuted">Submit the preferences form or select a template preset to generate your AI design mood board.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Suggestions Panel */}
+              {!loading && suggestion && (
+                <div className="bg-white dark:bg-brand-cardDark border border-brand-dark/10 dark:border-brand-cream/10 rounded-2xl shadow-xl overflow-hidden print-card">
+                  <div className="bg-brand-gold/10 p-6 flex flex-col sm:flex-row items-center justify-between border-b border-brand-dark/10 dark:border-brand-cream/10 gap-4 no-print">
+                    <div className="space-y-1 text-center sm:text-left">
+                      <h3 className="font-serif text-lg font-bold text-brand-dark dark:text-brand-cream font-serif">SVS AI Curated Mood Board</h3>
+                      <p className="text-xs text-brand-textMuted font-medium">Generated on {new Date(suggestion.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        onClick={handleCopyToClipboard}
+                        className="p-2.5 rounded-lg bg-white dark:bg-brand-bgDark border border-brand-dark/10 dark:border-brand-cream/10 hover:bg-brand-cream dark:hover:bg-brand-cardDark transition-colors text-brand-gold"
+                        title="Copy to clipboard"
+                      >
+                        <Icons.Copy className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={handleWhatsAppShare}
+                        className="p-2.5 rounded-lg bg-white dark:bg-brand-bgDark border border-brand-dark/10 dark:border-brand-cream/10 hover:bg-brand-cream dark:hover:bg-brand-cardDark transition-colors text-brand-gold"
+                        title="Share to WhatsApp"
+                      >
+                        <Icons.Send className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={handleDownloadPDF}
+                        className="p-2.5 rounded-lg bg-brand-gold text-brand-cream hover:bg-brand-goldLight transition-colors flex items-center gap-2 text-xs font-semibold px-4"
+                      >
+                        <Icons.FileText className="w-4 h-4 shrink-0" />
+                        <span>Download PDF</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Print Title Header inside PDF */}
+                  <div className="hidden print:block border-b-2 border-brand-gold pb-6 p-8 mb-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h1 className="font-serif text-2xl font-bold text-brand-dark">SRI VENKATA SAI FURNITURE WORKS</h1>
+                        <p className="text-[10px] tracking-wider uppercase font-semibold text-brand-gold">AI Generated Interior Design Proposal</p>
+                      </div>
+                      <div className="text-right text-xs">
+                        <p><strong>Date:</strong> {new Date(suggestion.createdAt).toLocaleDateString('en-IN')}</p>
+                        <p><strong>Proposal ID:</strong> {suggestion.id.toUpperCase()}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 mt-6 text-xs bg-brand-cream/30 p-4 rounded-xl border">
+                      <p><strong>Room Type:</strong> {suggestion.roomType}</p>
+                      <p><strong>Color Theme:</strong> {suggestion.colourPreference}</p>
+                      <p><strong>Stated Budget:</strong> ₹{suggestion.budget.toLocaleString('en-IN')}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 sm:p-8 space-y-8">
+                    <div>
+                      <h4 className="font-serif text-xl font-bold text-brand-dark dark:text-brand-cream mb-4 print-text-dark">Recommended Furniture Set</h4>
+                      <div className="border border-brand-dark/10 dark:border-brand-cream/10 rounded-xl overflow-hidden shadow-sm">
+                        {suggestion.recommendation.furnitureSet.map((item, index) => (
+                          <div key={index} className="flex flex-col sm:flex-row justify-between p-4 border-b border-brand-dark/5 dark:border-brand-cream/5 last:border-b-0 gap-2 bg-brand-cream/10 dark:bg-brand-bgDark/15 hover:bg-brand-gold/5 dark:hover:bg-brand-gold/5 transition-colors">
+                            <div className="space-y-0.5">
+                              <h5 className="font-serif text-base font-bold text-brand-dark dark:text-brand-cream print-text-dark">{item.name}</h5>
+                              <p className="text-xs text-brand-textMuted"><strong>Material:</strong> {item.material}</p>
+                            </div>
+                            <div className="text-sm font-bold text-brand-gold shrink-0 sm:self-center">₹{item.price.toLocaleString('en-IN')}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print-grid">
+                      <div className="space-y-3">
+                        <h4 className="font-serif text-lg font-bold text-brand-dark dark:text-brand-cream print-text-dark">Colour & Style Notes</h4>
+                        <div className="p-5 bg-brand-cream/40 dark:bg-brand-bgDark/40 rounded-xl border border-brand-dark/5 dark:border-brand-cream/5 leading-relaxed text-sm text-brand-dark/80 dark:text-brand-cream/80">{suggestion.recommendation.colourStyleNotes}</div>
+                      </div>
+                      <div className="space-y-3">
+                        <h4 className="font-serif text-lg font-bold text-brand-dark dark:text-brand-cream print-text-dark">Styling Tips</h4>
+                        <ul className="space-y-3">
+                          {suggestion.recommendation.stylingTips.map((tip, idx) => (
+                            <li key={idx} className="flex gap-3 text-sm text-brand-dark/80 dark:text-brand-cream/80 leading-relaxed">
+                              <span className="w-5 h-5 rounded-full bg-brand-gold/10 text-brand-gold font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">{idx + 1}</span>
+                              <span>{tip}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="p-6 bg-brand-gold/5 border border-brand-gold/15 rounded-2xl space-y-4">
+                      <h4 className="font-serif text-lg font-bold text-brand-dark dark:text-brand-cream print-text-dark">Budget Summary</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left">
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase font-semibold text-brand-textMuted tracking-wider">Set Cost</span>
+                          <p className="text-xl font-bold text-brand-dark dark:text-brand-cream print-text-dark">₹{suggestion.recommendation.budgetSummary.totalCost.toLocaleString('en-IN')}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase font-semibold text-brand-textMuted tracking-wider">Remaining</span>
+                          <p className="text-xl font-bold text-brand-gold">₹{suggestion.recommendation.budgetSummary.remaining.toLocaleString('en-IN')}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase font-semibold text-brand-textMuted tracking-wider">Total Budget</span>
+                          <p className="text-xl font-bold text-brand-dark/60 dark:text-brand-cream/60">₹{suggestion.budget.toLocaleString('en-IN')}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs italic text-brand-textMuted border-t border-brand-dark/10 dark:border-brand-cream/10 pt-3">{suggestion.recommendation.budgetSummary.notes}</p>
+                    </div>
+
+                    {/* Star Rating component */}
+                    <div className="flex flex-col items-center sm:items-start gap-2 py-4 border-t border-brand-dark/10 dark:border-brand-cream/10 no-print star-rating-form">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-brand-dark/60 dark:text-brand-cream/60">
+                        {rating > 0 ? 'Your Quality Rating' : 'Rate this design suggestion'}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((idx) => {
+                          const isFilled = rating > 0 ? idx <= rating : idx <= (hoverRating || rating);
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              disabled={rating > 0}
+                              onClick={() => submitRating(idx)}
+                              onMouseEnter={() => rating === 0 && setHoverRating(idx)}
+                              onMouseLeave={() => rating === 0 && setHoverRating(0)}
+                              className={`p-1 rounded-md transition-all ${rating === 0 ? 'hover:scale-110 active:scale-95 text-brand-gold' : ''}`}
+                            >
+                              <Icons.Star className={`w-6 h-6 ${isFilled ? 'fill-brand-gold text-brand-gold' : 'text-brand-dark/25 dark:text-brand-cream/25'}`} />
+                            </button>
+                          );
+                        })}
+                        {rating > 0 && <span className="text-sm font-semibold text-brand-gold ml-2 font-serif">({rating}/5 Rated)</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4 border-t border-brand-dark/10 dark:border-brand-cream/10 no-print">
+                      <button
+                        onClick={handleGenerate}
+                        className="flex items-center gap-2 border border-brand-dark/20 hover:border-brand-dark dark:border-brand-cream/20 dark:hover:border-brand-cream hover:bg-brand-cream/30 dark:hover:bg-brand-cream/5 text-xs font-semibold px-4 py-2.5 rounded-lg transition-all active:scale-95"
+                      >
+                        <Icons.RefreshCw className="w-3.5 h-3.5" />
+                        <span>Regenerate Board</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 3. HISTORY PAGE
+    function History({ navigate, list, onDelete, onUpdateRating }) {
+      const [expandedId, setExpandedId] = useState(null);
+      const [filterRoom, setFilterRoom] = useState('All');
+      const { addToast } = useToast();
+
+      const toggleExpand = (id) => {
+        setExpandedId(expandedId === id ? null : id);
+      };
+
+      const handleDelete = (e, id) => {
+        e.stopPropagation();
+        if (window.confirm('Delete this design from your history?')) {
+          onDelete(id);
+          addToast('Deleted from history log.', 'success');
+        }
+      };
+
+      const handleUpdateRate = (id, ratingVal) => {
+        onUpdateRating(id, ratingVal);
+        addToast('Rating saved.', 'success');
+      };
+
+      const filtered = filterRoom === 'All' ? list : list.filter(item => item.roomType === filterRoom);
+      const roomOptions = ['All', 'Living Room', 'Bedroom', 'Office', 'Dining Room', 'Kitchen'];
+
+      return (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+            <div className="space-y-1 text-center md:text-left">
+              <h1 className="font-serif text-3xl font-bold text-brand-dark dark:text-brand-cream">Design History</h1>
+              <p className="text-sm text-brand-textMuted">Review and manage all past AI furniture mood boards you have generated.</p>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-white dark:bg-brand-cardDark border px-3 py-2 rounded-xl self-center shadow-sm">
+              <Icons.Filter className="w-4 h-4 text-brand-gold" />
+              <select
+                value={filterRoom}
+                onChange={(e) => setFilterRoom(e.target.value)}
+                className="text-xs font-semibold bg-transparent outline-none cursor-pointer text-brand-dark dark:text-brand-cream dark:bg-brand-cardDark"
+              >
+                {roomOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="bg-white dark:bg-brand-cardDark border border-brand-dark/10 dark:border-brand-cream/10 rounded-2xl shadow-sm p-12 text-center space-y-6 flex flex-col items-center justify-center min-h-[350px]">
+              <div className="w-16 h-16 rounded-full bg-brand-gold/10 flex items-center justify-center text-brand-gold">
+                <Icons.Calendar className="w-8 h-8" />
+              </div>
+              <div className="space-y-2 max-w-sm">
+                <h3 className="font-serif text-lg font-bold text-brand-dark dark:text-brand-cream">No History Found</h3>
+                <p className="text-sm text-brand-textMuted">You haven't generated suggestions for this room class yet.</p>
+              </div>
+              <button
+                onClick={() => navigate('tool')}
+                className="bg-brand-gold hover:bg-brand-goldLight text-brand-cream font-medium px-6 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-md transition-all active:scale-[0.98]"
+              >
+                <span>Create a Suggestion</span>
+                <Icons.ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filtered.map((item) => {
+                const isExpanded = expandedId === item.id;
+                return (
+                  <div key={item.id} className={`bg-white dark:bg-brand-cardDark border rounded-2xl transition-all duration-200 overflow-hidden shadow-sm ${isExpanded ? 'border-brand-gold/60 ring-1 ring-brand-gold/20' : 'border-brand-dark/10 dark:border-brand-cream/10'}`}>
+                    <div onClick={() => toggleExpand(item.id)} className="p-5 flex items-center justify-between cursor-pointer select-none gap-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="bg-brand-gold/10 text-brand-gold p-2.5 rounded-xl shrink-0">
+                          <Icons.Armchair className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-serif text-base font-bold text-brand-dark dark:text-brand-cream">{item.roomType}</h3>
+                            {item.rating && <span className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2 py-0.5 rounded">★ {item.rating}</span>}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brand-textMuted font-medium pt-0.5">
+                            <span className="flex items-center gap-1"><Icons.Calendar className="w-3.5 h-3.5" />{new Date(item.createdAt).toLocaleDateString('en-IN')}</span>
+                            <span>Budget: <strong>₹{item.budget.toLocaleString('en-IN')}</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <button onClick={(e) => handleDelete(e, item.id)} className="p-2 rounded-lg text-brand-textMuted hover:text-red-500 hover:bg-red-500/10 transition-colors">
+                          <Icons.Trash2 className="w-4 h-4" />
+                        </button>
+                        <div className="p-1 text-brand-textMuted bg-brand-cream/60 dark:bg-brand-bgDark rounded-lg">
+                          {isExpanded ? <Icons.ChevronUp className="w-4 h-4" /> : <Icons.ChevronDown className="w-4 h-4" />}
+                        </div>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="border-t border-brand-dark/10 dark:border-brand-cream/10 bg-brand-cream/10 dark:bg-brand-bgDark/20 p-6 sm:p-8 space-y-6">
+                        <div>
+                          <h4 className="font-serif text-sm font-bold uppercase tracking-wider text-brand-textMuted mb-3">Furniture Items</h4>
+                          <div className="border border-brand-dark/10 dark:border-brand-cream/10 rounded-xl overflow-hidden bg-white dark:bg-brand-cardDark">
+                            {item.recommendation.furnitureSet.map((fItem, fIdx) => (
+                              <div key={fIdx} className="flex justify-between p-3.5 border-b border-brand-dark/5 dark:border-brand-cream/5 last:border-b-0 text-xs sm:text-sm">
+                                <div>
+                                  <p className="font-serif font-bold text-brand-dark dark:text-brand-cream">{fItem.name}</p>
+                                  <p className="text-[10px] text-brand-textMuted font-medium pt-0.5">Material: {fItem.material}</p>
+                                </div>
+                                <span className="font-bold text-brand-gold pt-1">₹{fItem.price.toLocaleString('en-IN')}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                          <div className="space-y-2">
+                            <h4 className="font-serif text-xs font-bold uppercase tracking-wider text-brand-textMuted">Colour & Styling details</h4>
+                            <div className="p-4 bg-white dark:bg-brand-cardDark rounded-xl border border-brand-dark/5 dark:border-brand-cream/5 text-xs leading-relaxed text-brand-dark/80 dark:text-brand-cream/80">{item.recommendation.colourStyleNotes}</div>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="font-serif text-xs font-bold uppercase tracking-wider text-brand-textMuted">Styling Tips</h4>
+                            <ul className="space-y-2">
+                              {item.recommendation.stylingTips.map((tip, tIdx) => (
+                                <li key={tIdx} className="flex gap-2 text-xs text-brand-dark/80 dark:text-brand-cream/80">
+                                  <span className="w-4 h-4 rounded-full bg-brand-gold/15 text-brand-gold font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">{tIdx + 1}</span>
+                                  <span>{tip}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="p-4.5 bg-brand-gold/5 border border-brand-gold/20 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
+                          <div>
+                            <p className="text-brand-textMuted font-semibold uppercase text-[9px] tracking-wider">Estimated Investment</p>
+                            <p className="text-brand-dark dark:text-brand-cream">Total Set Cost: <strong>₹{item.recommendation.budgetSummary.totalCost.toLocaleString('en-IN')}</strong> (Remaining: ₹{item.recommendation.budgetSummary.remaining.toLocaleString('en-IN')})</p>
+                          </div>
+                          <span className="text-[10px] italic text-brand-textMuted">{item.recommendation.budgetSummary.notes}</span>
+                        </div>
+
+                        {/* Interactive Star Rating */}
+                        <div className="flex items-center gap-1.5 pt-2 font-semibold">
+                          <span className="text-xs font-semibold text-brand-textMuted">Feedback Rating:</span>
+                          {[1, 2, 3, 4, 5].map((idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleUpdateRate(item.id, idx)}
+                              className="text-brand-gold p-0.5 hover:scale-110 transition-transform animate-fade-in"
+                            >
+                              <Icons.Star className={`w-5 h-5 ${idx <= (item.rating || 0) ? 'fill-brand-gold text-brand-gold' : 'text-brand-dark/20 dark:text-brand-cream/20'}`} />
+                            </button>
+                          ))}
+                        </div>
+
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 4. ADMIN ANALYTICS DASHBOARD PAGE
+    function AdminDashboard({ list, onRefresh }) {
+      const totalSuggestions = list.length;
+      
+      const rated = list.filter(i => i.rating !== null && i.rating > 0);
+      const averageRating = rated.length > 0 ? Number((rated.reduce((sum, item) => sum + item.rating, 0) / rated.length).toFixed(1)) : 0;
+
+      // Group popularity
+      const roomCounts = {};
+      list.forEach(i => roomCounts[i.roomType] = (roomCounts[i.roomType] || 0) + 1);
+      const popularRoomTypes = Object.keys(roomCounts).map(name => ({ name, count: roomCounts[name] })).sort((a,b) => b.count - a.count);
+
+      // Budgets
+      const ranges = {
+        'Budget (< ₹50k)': 0,
+        'Mid-Range (₹50k - ₹100k)': 0,
+        'Premium (₹100k - ₹200k)': 0,
+        'Luxury (₹200k+)': 0
+      };
+      list.forEach(item => {
+        const b = item.budget;
+        if (b < 50000) ranges['Budget (< ₹50k)']++;
+        else if (b <= 100000) ranges['Mid-Range (₹50k - ₹100k)']++;
+        else if (b <= 200000) ranges['Premium (₹100k - ₹200k)']++;
+        else ranges['Luxury (₹200k+)']++;
+      });
+      const budgetDistribution = Object.keys(ranges).map(label => ({ label, value: ranges[label] }));
+
+      // Daily Trend (Last 7 Days)
+      const dailyTrend = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dString = d.toISOString().split('T')[0];
+        const dLabel = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+        
+        const count = list.filter(item => item.createdAt.split('T')[0] === dString).length;
+        dailyTrend.push({ date: dString, label: dLabel, count });
+      }
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-brand-dark/10 dark:border-brand-cream/10 pb-6">
+            <div className="text-center sm:text-left space-y-1">
+              <h1 className="font-serif text-3xl font-bold text-brand-dark dark:text-brand-cream">Admin Analytics Dashboard</h1>
+              <p className="text-sm text-brand-textMuted">Monitor AI system performance, customer usage trends, and design quality ratings.</p>
+            </div>
+            
+            <button
+              onClick={onRefresh}
+              className="flex items-center gap-2 border border-brand-dark/20 hover:border-brand-dark dark:border-brand-cream/20 dark:hover:border-brand-cream hover:bg-brand-cream/30 dark:hover:bg-brand-cream/5 text-xs font-semibold px-4 py-2.5 rounded-lg transition-all active:scale-95"
+            >
+              <Icons.RefreshCw className="w-3.5 h-3.5 shrink-0" />
+              <span>Refresh Metrics</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white dark:bg-brand-cardDark p-6 rounded-2xl border border-brand-dark/10 dark:border-brand-cream/10 shadow-sm flex items-center justify-between">
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-textMuted">Total Mood Boards</span>
+                <p className="text-3xl font-bold font-serif text-brand-dark dark:text-brand-cream">{totalSuggestions}</p>
+              </div>
+              <div className="bg-brand-gold/10 p-3 rounded-xl text-brand-gold">
+                <Icons.LayoutDashboard className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-brand-cardDark p-6 rounded-2xl border border-brand-dark/10 dark:border-brand-cream/10 shadow-sm flex items-center justify-between">
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-textMuted">Average Rating</span>
+                <p className="text-3xl font-bold font-serif text-brand-dark dark:text-brand-cream">
+                  {averageRating > 0 ? `${averageRating} / 5` : 'No ratings'}
+                </p>
+              </div>
+              <div className="bg-brand-gold/10 p-3 rounded-xl text-brand-gold">
+                <Icons.Star className="w-6 h-6 fill-brand-gold text-brand-gold" />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-brand-cardDark p-6 rounded-2xl border border-brand-dark/10 dark:border-brand-cream/10 shadow-sm flex items-center justify-between">
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-textMuted">Most Popular Room</span>
+                <p className="text-lg font-bold font-serif text-brand-dark dark:text-brand-cream truncate max-w-[150px]">{popularRoomTypes[0]?.name || 'N/A'}</p>
+              </div>
+              <div className="bg-brand-gold/10 p-3 rounded-xl text-brand-gold">
+                <Icons.Flame className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-brand-cardDark p-6 rounded-2xl border border-brand-dark/10 dark:border-brand-cream/10 shadow-sm flex items-center justify-between">
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-textMuted">Storage Node</span>
+                <p className="text-xs font-semibold bg-brand-gold/10 text-brand-gold px-2.5 py-1 rounded-md mt-1 inline-block">Local Storage (Active)</p>
+              </div>
+              <div className="bg-brand-gold/10 p-3 rounded-xl text-brand-gold">
+                <Icons.Database className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-6 bg-white dark:bg-brand-cardDark p-6 sm:p-8 rounded-3xl border border-brand-dark/10 dark:border-brand-cream/10 shadow-sm space-y-6">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-brand-dark dark:text-brand-cream">Room Type Popularity</h3>
+                <p className="text-xs text-brand-textMuted">Distribution of AI furniture set requests across different room classes.</p>
+              </div>
+              <div className="border border-brand-dark/5 dark:border-brand-cream/5 p-4 rounded-2xl bg-brand-cream/20 dark:bg-brand-bgDark/20">
+                <BarChart data={popularRoomTypes} />
+              </div>
+            </div>
+
+            <div className="lg:col-span-6 bg-white dark:bg-brand-cardDark p-6 sm:p-8 rounded-3xl border border-brand-dark/10 dark:border-brand-cream/10 shadow-sm space-y-6">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-brand-dark dark:text-brand-cream">Budget Distribution</h3>
+                <p className="text-xs text-brand-textMuted">Segmentation of design requests by customer pricing category (₹).</p>
+              </div>
+              <div className="border border-brand-dark/5 dark:border-brand-cream/5 p-4 rounded-2xl bg-brand-cream/20 dark:bg-brand-bgDark/20">
+                <DonutChart data={budgetDistribution} />
+              </div>
+            </div>
+
+            <div className="lg:col-span-12 bg-white dark:bg-brand-cardDark p-6 sm:p-8 rounded-3xl border border-brand-dark/10 dark:border-brand-cream/10 shadow-sm space-y-6">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-brand-dark dark:text-brand-cream">Daily Generation Trend</h3>
+                <p className="text-xs text-brand-textMuted">Visual timeline representing mood boards generated over the past 7 days.</p>
+              </div>
+              <div className="border border-brand-dark/5 dark:border-brand-cream/5 p-6 rounded-2xl bg-brand-cream/20 dark:bg-brand-bgDark/20 overflow-x-auto">
+                <div className="min-w-[480px]">
+                  <LineChart data={dailyTrend} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================================
+    // App Bootstrap Component
+    // =========================================================================
+    function App() {
+      const [currentPage, setCurrentPage] = useState('home');
+      
+      const [darkMode, setDarkMode] = useState(() => {
+        const saved = localStorage.getItem('svs_dark_mode');
+        return saved ? JSON.parse(saved) : false;
+      });
+
+      const [history, setHistory] = useState([]);
+
+      useEffect(() => {
+        if (darkMode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('svs_dark_mode', JSON.stringify(darkMode));
+      }, [darkMode]);
+
+      useEffect(() => {
+        const stored = localStorage.getItem('svs_history');
+        if (stored) {
+          setHistory(JSON.parse(stored));
+        } else {
+          localStorage.setItem('svs_history', JSON.stringify(initialSeedData));
+          setHistory(initialSeedData);
+        }
+      }, []);
+
+      const toggleDarkMode = () => setDarkMode(!darkMode);
+
+      const handleSaveSuggestion = (item) => {
+        const updated = [item, ...history];
+        setHistory(updated);
+        localStorage.setItem('svs_history', JSON.stringify(updated));
+      };
+
+      const handleDeleteSuggestion = (id) => {
+        const updated = history.filter(item => item.id !== id);
+        setHistory(updated);
+        localStorage.setItem('svs_history', JSON.stringify(updated));
+      };
+
+      const handleUpdateRating = (id, newRating) => {
+        const updated = history.map(item => item.id === id ? { ...item, rating: newRating } : item);
+        setHistory(updated);
+        localStorage.setItem('svs_history', JSON.stringify(updated));
+      };
+
+      const renderPage = () => {
+        switch (currentPage) {
+          case 'home':
+            return <Home navigate={setCurrentPage} />;
+          case 'tool':
+            return <SuggestionTool navigate={setCurrentPage} onSave={handleSaveSuggestion} />;
+          case 'history':
+            return <History navigate={setCurrentPage} list={history} onDelete={handleDeleteSuggestion} onUpdateRating={handleUpdateRating} />;
+          case 'admin':
+            return <AdminDashboard list={history} onRefresh={() => window.location.reload()} />;
+          default:
+            return <Home navigate={setCurrentPage} />;
+        }
+      };
+
+      return (
+        <ToastProvider>
+          <div className="flex flex-col min-h-screen bg-brand-cream dark:bg-brand-bgDark text-brand-dark dark:text-brand-cream transition-colors duration-300">
+            
+            {/* Header Navigation */}
+            <nav className="fixed top-0 left-0 right-0 z-40 bg-brand-cream/90 dark:bg-brand-bgDark/90 backdrop-blur-md border-b border-brand-dark/10 dark:border-brand-cream/10 no-print transition-colors duration-300">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-20">
+                  <div onClick={() => setCurrentPage('home')} className="flex items-center gap-3 cursor-pointer select-none group">
+                    <div className="bg-brand-gold text-brand-cream p-2 rounded-lg transition-transform duration-300 group-hover:scale-105">
+                      <Icons.Armchair className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <span className="font-serif text-lg sm:text-xl font-bold tracking-tight text-brand-dark dark:text-brand-cream group-hover:text-brand-gold transition-colors">Sri Venkata Sai</span>
+                      <span className="block text-[10px] tracking-widest uppercase text-brand-gold font-medium">Furniture Works</span>
+                    </div>
+                  </div>
+
+                  <div className="hidden md:flex items-center gap-8">
+                    {[
+                      { id: 'home', label: 'Home' },
+                      { id: 'tool', label: 'AI Suggestion Tool' },
+                      { id: 'history', label: 'History' },
+                      { id: 'admin', label: 'Admin Analytics' }
+                    ].map((link) => (
+                      <button
+                        key={link.id}
+                        onClick={() => setCurrentPage(link.id)}
+                        className={`font-sans text-sm font-medium tracking-wide transition-colors relative py-2 ${
+                          currentPage === link.id ? 'text-brand-gold font-bold' : 'text-brand-dark/70 hover:text-brand-dark dark:text-brand-cream/70 dark:hover:text-brand-cream font-medium'
+                        }`}
+                      >
+                        {link.label}
+                        {currentPage === link.id && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-gold rounded-full animate-fade-in" />}
+                      </button>
+                    ))}
+
+                    <button onClick={toggleDarkMode} className="p-2.5 rounded-full hover:bg-brand-dark/5 dark:hover:bg-brand-cream/5 text-brand-gold transition-colors">
+                      {darkMode ? <Icons.Sun className="w-5 h-5 animate-fade-in" /> : <Icons.Moon className="w-5 h-5 animate-fade-in" />}
+                    </button>
+                  </div>
+
+                  {/* Mobile nav toggle */}
+                  <div className="flex items-center gap-4 md:hidden">
+                    <button onClick={toggleDarkMode} className="p-2 rounded-full hover:bg-brand-dark/5 dark:hover:bg-brand-cream/5 text-brand-gold">
+                      {darkMode ? <Icons.Sun className="w-5 h-5" /> : <Icons.Moon className="w-5 h-5" />}
+                    </button>
+                    <button onClick={() => {
+                      const menu = document.getElementById('mobile-menu');
+                      menu.classList.toggle('hidden');
+                    }} className="p-2 text-brand-dark dark:text-brand-cream hover:bg-brand-dark/5 dark:hover:bg-brand-cream/5 rounded-lg">
+                      <Icons.Menu className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile menu dropdown */}
+              <div id="mobile-menu" className="hidden md:hidden bg-brand-cream dark:bg-brand-bgDark border-b border-brand-dark/10 dark:border-brand-cream/10 animate-fade-in shadow-lg">
+                <div className="px-2 pt-2 pb-4 space-y-1 sm:px-3">
+                  {[
+                    { id: 'home', label: 'Home' },
+                    { id: 'tool', label: 'AI Suggestion Tool' },
+                    { id: 'history', label: 'History' },
+                    { id: 'admin', label: 'Admin Analytics' }
+                  ].map((link) => (
+                    <button
+                      key={link.id}
+                      onClick={() => {
+                        setCurrentPage(link.id);
+                        document.getElementById('mobile-menu').classList.add('hidden');
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-lg text-base font-medium tracking-wide transition-colors ${
+                        currentPage === link.id ? 'bg-brand-gold/10 text-brand-gold font-semibold' : 'text-brand-dark/70 hover:bg-brand-dark/5 hover:text-brand-dark dark:text-brand-cream/70 dark:hover:bg-brand-cream/5'
+                      }`}
+                    >
+                      {link.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </nav>
+
+            {/* Page content container */}
+            <main className="flex-grow pt-24 pb-16">
+              <div className="animate-fade-in">
+                {renderPage()}
+              </div>
+            </main>
+
+            {/* Footer */}
+            <footer className="bg-brand-dark text-brand-cream/80 border-t border-brand-gold/20 pt-16 pb-8 no-print transition-colors duration-300">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+                  <div className="md:col-span-2 space-y-4">
+                    <div className="flex items-center gap-3 text-brand-cream">
+                      <div className="bg-brand-gold text-brand-cream p-2 rounded-lg">
+                        <Icons.Armchair className="w-5 h-5" />
+                      </div>
+                      <span className="font-serif text-xl font-bold tracking-tight">Sri Venkata Sai Furniture Works</span>
+                    </div>
+                    <p className="text-sm leading-relaxed max-w-sm">Crafting premium wooden furniture designs with legacy craftsmanship for over three decades. Creating living spaces that reflect comfort, durability, and luxury.</p>
+                  </div>
+                  <div className="space-y-4">
+                    <h4 className="font-serif text-brand-cream text-base font-semibold tracking-wider uppercase border-b border-brand-gold/20 pb-2">Explore</h4>
+                    <ul className="space-y-2.5 text-sm">
+                      <li><button onClick={() => setCurrentPage('home')} className="hover:text-brand-gold transition-colors text-left">Home</button></li>
+                      <li><button onClick={() => setCurrentPage('tool')} className="hover:text-brand-gold transition-colors text-left">AI Suggestion Tool</button></li>
+                      <li><button onClick={() => setCurrentPage('history')} className="hover:text-brand-gold transition-colors text-left">Suggestion History</button></li>
+                      <li><button onClick={() => setCurrentPage('admin')} className="hover:text-brand-gold transition-colors text-left">Admin Dashboard</button></li>
+                    </ul>
+                  </div>
+                  <div className="space-y-4">
+                    <h4 className="font-serif text-brand-cream text-base font-semibold tracking-wider uppercase border-b border-brand-gold/20 pb-2">Get in Touch</h4>
+                    <ul className="space-y-3 text-sm">
+                      <li className="flex items-start gap-2.5">
+                        <Icons.MapPin className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
+                        <span>Industrial Area Road, Near Main Chowk, Hyderabad, Telangana, India</span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <Icons.Phone className="w-4 h-4 text-brand-gold shrink-0" />
+                        <a href="tel:+919876543210" className="hover:text-brand-gold transition-colors">+91 98765 43210</a>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <Icons.Mail className="w-4 h-4 text-brand-gold shrink-0" />
+                        <a href="mailto:info@svsfurnitures.com" className="hover:text-brand-gold transition-colors">info@svsfurnitures.com</a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="border-t border-brand-cream/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+                  <p>&copy; {new Date().getFullYear()} Sri Venkata Sai Furniture Works. All rights reserved.</p>
+                  <div className="flex gap-4">
+                    <a href="#" className="hover:text-brand-gold transition-colors">Privacy Policy</a>
+                    <a href="#" className="hover:text-brand-gold transition-colors">Terms of Service</a>
+                  </div>
+                </div>
+              </div>
+            </footer>
+
+          </div>
+        </ToastProvider>
+      );
+    }
+
+    // =========================================================================
+    // Mount App
+    // =========================================================================
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<App />);
+
+  </script>
+</body>
+</html>

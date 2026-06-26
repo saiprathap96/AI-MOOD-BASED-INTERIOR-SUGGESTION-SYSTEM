@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply transition-colors duration-300;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-brand-cream dark:bg-brand-bgDark;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-brand-gold/30 hover:bg-brand-gold/60 dark:bg-brand-gold/20 dark:hover:bg-brand-gold/40 rounded-full transition-colors;
+}
+
+/* Custom Range Slider Styles */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  @apply bg-brand-dark/10 dark:bg-brand-cream/10 h-2 rounded-full;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  @apply bg-brand-gold h-5 w-5 rounded-full border-2 border-brand-cream dark:border-brand-bgDark shadow-md transition-transform duration-150 ease-in-out hover:scale-110 active:scale-95;
+  margin-top: -6px;
+}
+
+input[type="range"]::-moz-range-track {
+  @apply bg-brand-dark/10 dark:bg-brand-cream/10 h-2 rounded-full;
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply bg-brand-gold h-5 w-5 rounded-full border-2 border-brand-cream dark:border-brand-bgDark shadow-md transition-transform duration-150 ease-in-out hover:scale-110 active:scale-95;
+  border: none;
+}
+
+/* Print-Friendly Layout CSS */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  /* Hide navigation, footers, CTAs, rating system, settings */
+  nav, 
+  footer, 
+  button, 
+  .no-print, 
+  .toast-container,
+  .star-rating-form,
+  .dark-mode-toggle {
+    display: none !important;
+  }
+
+  /* Flatten background containers, remove shadow effects */
+  .print-card {
+    background: transparent !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  .print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 15px !important;
+  }
+
+  .print-title {
+    text-align: center;
+    border-bottom: 2px solid #8B6914;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  .print-text-dark {
+    color: #000 !important;
+  }
+}
