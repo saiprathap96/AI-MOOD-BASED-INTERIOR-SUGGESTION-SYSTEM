@@ -2,10 +2,12 @@
   "experimentalServices": {
     "frontend": {
       "root": "frontend",
-      "buildCommand": "npm run build"
+      "buildCommand": "npm run build",
+      "mount": "/"
     },
     "backend": {
-      "root": "backend"
+      "root": "backend",
+      "routePrefix": "/api"
     }
   }
 }
