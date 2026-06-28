@@ -1,13 +1,13 @@
 {
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://your-backend-url.onrender.com/api/:path*"
+  "experimentalServices": {
+    "frontend": {
+      "root": "frontend",
+      "routePrefix": "/",
+      "framework": "vite"
     },
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
+    "backend": {
+      "root": "backend",
+      "routePrefix": "/api"
     }
-  ]
+  }
 }
