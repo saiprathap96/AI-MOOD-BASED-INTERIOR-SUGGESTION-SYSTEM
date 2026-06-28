@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Sparkles, Clipboard, Copy, FileText, Send, RefreshCw, Armchair, HelpCircle } from 'lucide-react';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import StarRating from '../components/StarRating';
@@ -63,10 +63,10 @@ export default function SuggestionTool({ navigate }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Submit suggestion request
+  // Submit suggestion request — normalizes flat Flask response into nested shape
   const handleGenerate = async (e) => {
     if (e) e.preventDefault();
-    
+
     if (!validateForm()) {
       addToast('Please fix the errors in the form.', 'error');
       return;
@@ -83,10 +83,53 @@ export default function SuggestionTool({ navigate }) {
       });
 
       if (response.success) {
-        setSuggestion(response.data);
+        const d = response.data;
+
+        // Map flat backend fields -> nested shape the render section expects
+        const furnitureSet = (d.furniture_set || []).map(item => ({
+          name:     item.name        || 'Unknown Item',
+          material: item.description || item.dimensions || '',
+          price:    Number(item.price) || 0,
+          category: item.category    || '',
+        }));
+
+        const totalCost = Number(d.total_set_cost) || furnitureSet.reduce((s, i) => s + i.price, 0);
+        const remaining = Number(budget) - totalCost;
+
+        // Split styling_notes into a short intro note + bullet tips
+        const rawNotes  = d.styling_notes || '';
+        const sentences = rawNotes.split(/\.\s+/).filter(s => s.trim().length > 5);
+        const colourNote = sentences.length > 0 ? sentences[0] + '.' : rawNotes;
+        const tips = sentences.length > 1
+          ? sentences.slice(1).map(s => s.endsWith('.') ? s : s + '.')
+          : [rawNotes];
+
+        const normalized = {
+          // integer id -> string so .substring() works
+          id:               String(d.history_id || d.output_id || Date.now()),
+          output_id:        d.output_id,
+          history_id:       d.history_id,
+          roomType:         d.roomType         || roomType,
+          colourPreference: d.colourPreference || colourPreference,
+          budget:           Number(d.budget)   || Number(budget),
+          createdAt:        d.created_at ? new Date(d.created_at).toISOString() : new Date().toISOString(),
+          rating:           d.rating || null,
+          recommendation: {
+            furnitureSet,
+            colourStyleNotes: colourNote,
+            stylingTips:      tips,
+            budgetSummary: {
+              totalCost,
+              remaining: Math.max(0, remaining),
+              notes: `This curated set uses Rs.${totalCost.toLocaleString('en-IN')} of your Rs.${Number(budget).toLocaleString('en-IN')} budget, leaving Rs.${Math.max(0, remaining).toLocaleString('en-IN')} for accessories and decor.`,
+            }
+          }
+        };
+
+        setSuggestion(normalized);
         addToast('Mood board generated successfully!', 'success');
       } else {
-        throw new Error(response.message);
+        throw new Error(response.message || 'Generation failed');
       }
     } catch (error) {
       console.error(error);

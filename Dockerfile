@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y \
 
 COPY backend/package*.json ./
 
-# Install and rebuild sqlite3 from source
-RUN npm install --build-from-source
+# Install dependencies first, then rebuild sqlite3 from source
+RUN npm install
 RUN npm rebuild sqlite3 --build-from-source
 
 COPY backend/ .

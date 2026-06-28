@@ -606,5 +606,251 @@ def get_templates():
     ]
     return jsonify(presets)
 
+# /api/suggestions/* routes are defined below (before __main__ so they register on import)
+
+# ==========================================
+# /api/suggestions/* — routes that match the React frontend
+# ==========================================
+
+@app.route('/api/suggestions/generate', methods=['POST'])
+def suggestions_generate():
+    """
+    POST /api/suggestions/generate
+    Body (camelCase from React):
+        { roomType, colourPreference, budget }
+    Response:
+        { success: true, data: { ... } }
+    """
+    data = request.get_json() or {}
+
+    # Accept both camelCase (frontend) and snake_case (legacy)
+    room_type      = data.get('roomType')      or data.get('room_type')
+    color_palette  = data.get('colourPreference') or data.get('color_palette')
+    budget         = data.get('budget')
+
+    if not room_type or not color_palette or not budget:
+        return jsonify({
+            "success": False,
+            "message": "Missing required fields: roomType, colourPreference, budget"
+        }), 400
+
+    try:
+        budget = float(budget)
+        if budget <= 0:
+            return jsonify({"success": False, "message": "Budget must be greater than zero"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"success": False, "message": "Invalid budget value"}), 400
+
+    # Persist input
+    inp_record = InputRecord(room_type=room_type, color_palette=color_palette, budget=budget)
+    db.session.add(inp_record)
+    db.session.commit()
+
+    # Generate AI suggestion
+    ai_resp       = call_ai_api(room_type, color_palette, budget)
+    furniture_json = json.dumps(ai_resp.get("furniture_set", []))
+    styling_notes  = ai_resp.get("styling_notes", "")
+
+    # Persist output
+    out_record = AIOutputRecord(
+        input_id=inp_record.id,
+        furniture_set_data=furniture_json,
+        styling_notes=styling_notes
+    )
+    db.session.add(out_record)
+    db.session.commit()
+
+    # Persist history link
+    hist_record = HistoryRecord(input_id=inp_record.id, output_id=out_record.id)
+    db.session.add(hist_record)
+    db.session.commit()
+
+    payload = {
+        "history_id":    hist_record.id,
+        "input_id":      inp_record.id,
+        "output_id":     out_record.id,
+        "roomType":      room_type,
+        "colourPreference": color_palette,
+        "budget":        budget,
+        "furniture_set": ai_resp.get("furniture_set", []),
+        "styling_notes": styling_notes,
+        "total_set_cost": ai_resp.get("total_set_cost", 0.0),
+        "created_at":    hist_record.created_at.isoformat()
+    }
+    return jsonify({"success": True, "data": payload})
+
+
+@app.route('/api/suggestions/history', methods=['GET'])
+def suggestions_history():
+    """
+    GET /api/suggestions/history
+    Response:
+        { success: true, data: [ ...records ] }
+    """
+    records = HistoryRecord.query.order_by(HistoryRecord.created_at.desc()).all()
+    history_list = []
+
+    for r in records:
+        inp = r.input_rel
+        out = r.output_rel
+        rat = r.rating_rel
+
+        history_list.append({
+            "id":             r.id,          # frontend uses item.id for deletes
+            "history_id":     r.id,
+            "input_id":       r.input_id,
+            "output_id":      r.output_id,
+            "roomType":       inp.room_type,
+            "colourPreference": inp.color_palette,
+            "room_type":      inp.room_type,
+            "color_palette":  inp.color_palette,
+            "budget":         inp.budget,
+            "furniture_set":  json.loads(out.furniture_set_data),
+            "styling_notes":  out.styling_notes,
+            "rating":         rat.rating if rat else None,
+            "feedback_comment": rat.comment if rat else None,
+            "created_at":     r.created_at.isoformat()
+        })
+
+    return jsonify({"success": True, "data": history_list})
+
+
+@app.route('/api/suggestions/<int:history_id>', methods=['DELETE'])
+def suggestions_delete(history_id):
+    """
+    DELETE /api/suggestions/<history_id>
+    Deletes the history record (and cascades to input/output/rating via FK rules).
+    Response:
+        { success: true }
+    """
+    r = db.session.get(HistoryRecord, history_id)
+    if not r:
+        return jsonify({"success": False, "message": "History record not found"}), 404
+
+    # Delete the linked input — cascade takes care of output, rating, history
+    inp = db.session.get(InputRecord, r.input_id)
+    if inp:
+        db.session.delete(inp)
+    else:
+        db.session.delete(r)
+
+    db.session.commit()
+    return jsonify({"success": True})
+
+
+@app.route('/api/suggestions/<int:output_id>/rate', methods=['POST'])
+def suggestions_rate(output_id):
+    """
+    POST /api/suggestions/<output_id>/rate
+    Body: { rating: 1-5 }
+    Response:
+        { success: true, rating_id: <id> }
+    """
+    data    = request.get_json() or {}
+    rating  = data.get('rating')
+    comment = data.get('comment', '')
+
+    if rating is None:
+        return jsonify({"success": False, "message": "Missing required field: rating"}), 400
+
+    try:
+        rating = int(rating)
+        if rating < 1 or rating > 5:
+            return jsonify({"success": False, "message": "Rating must be between 1 and 5"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"success": False, "message": "Rating must be an integer"}), 400
+
+    out_record = db.session.get(AIOutputRecord, output_id)
+    if not out_record:
+        return jsonify({"success": False, "message": "Output record not found"}), 404
+
+    # Upsert rating
+    rat_record = RatingRecord.query.filter_by(output_id=output_id).first()
+    if rat_record:
+        rat_record.rating  = rating
+        rat_record.comment = comment
+    else:
+        rat_record = RatingRecord(output_id=output_id, rating=rating, comment=comment)
+        db.session.add(rat_record)
+
+    db.session.commit()
+
+    # Link rating to history record
+    hist_record = HistoryRecord.query.filter_by(output_id=output_id).first()
+    if hist_record:
+        hist_record.rating_id = rat_record.id
+        db.session.commit()
+
+    return jsonify({"success": True, "rating_id": rat_record.id})
+
+
+@app.route('/api/suggestions/analytics', methods=['GET'])
+def suggestions_analytics():
+    """
+    GET /api/suggestions/analytics
+    Response shape expected by AdminDashboard:
+        {
+          success: true,
+          data: {
+            totalSuggestions,
+            averageRating,
+            popularRoomTypes: [{ name, count }],
+            budgetDistribution: [{ label, count }],
+            dailyTrend: [{ date, count }]
+          }
+        }
+    """
+    history_records = HistoryRecord.query.all()
+    total           = len(history_records)
+
+    # Average rating
+    rating_records = RatingRecord.query.all()
+    avg_rating     = 0.0
+    if rating_records:
+        avg_rating = round(sum(r.rating for r in rating_records) / len(rating_records), 2)
+
+    # Room type popularity
+    room_counts = {}
+    for r in history_records:
+        rt = r.input_rel.room_type
+        room_counts[rt] = room_counts.get(rt, 0) + 1
+    popular_room_types = [{"name": k, "count": v} for k, v in
+                          sorted(room_counts.items(), key=lambda x: x[1], reverse=True)]
+
+    # Budget distribution buckets (in ₹)
+    buckets = {"< ₹50K": 0, "₹50K–₹1L": 0, "₹1L–₹3L": 0, "> ₹3L": 0}
+    for r in history_records:
+        b = r.input_rel.budget
+        if b < 50000:
+            buckets["< ₹50K"] += 1
+        elif b < 100000:
+            buckets["₹50K–₹1L"] += 1
+        elif b < 300000:
+            buckets["₹1L–₹3L"] += 1
+        else:
+            buckets["> ₹3L"] += 1
+    budget_distribution = [{"label": k, "count": v} for k, v in buckets.items()]
+
+    # Daily trend — last 7 days
+    today    = datetime.now(timezone.utc).date()
+    days     = [today - timedelta(days=i) for i in range(6, -1, -1)]
+    day_strs = [d.strftime('%Y-%m-%d') for d in days]
+    day_map  = {d: 0 for d in day_strs}
+    for r in history_records:
+        ds = r.created_at.strftime('%Y-%m-%d')
+        if ds in day_map:
+            day_map[ds] += 1
+    daily_trend = [{"date": d, "count": day_map[d]} for d in day_strs]
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "totalSuggestions":   total,
+            "averageRating":      avg_rating,
+            "popularRoomTypes":   popular_room_types,
+            "budgetDistribution": budget_distribution,
+            "dailyTrend":         daily_trend
+        }
+    })
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=True)

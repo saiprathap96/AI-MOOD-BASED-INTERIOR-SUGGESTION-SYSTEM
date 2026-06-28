@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Sun, Moon, Menu, X, Armchair } from 'lucide-react';
+import { Sun, Moon, Menu, X, Armchair, LogOut, ShieldCheck, User } from 'lucide-react';
 
-export default function Header({ currentPage, navigate, darkMode, toggleDarkMode }) {
+export default function Header({ currentPage, navigate, darkMode, toggleDarkMode, authUser, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Build nav links based on role
   const navLinks = [
-    { id: 'home', label: 'Home' },
-    { id: 'tool', label: 'AI Suggestion Tool' },
+    { id: 'home',    label: 'Home' },
+    { id: 'tool',    label: 'AI Suggestion Tool' },
     { id: 'history', label: 'History' },
-    { id: 'admin', label: 'Analysis' }
+    // Admin-only link
+    ...(authUser?.role === 'admin' ? [{ id: 'admin', label: 'Analysis' }] : []),
   ];
 
   const handleNavClick = (pageId) => {
@@ -20,10 +22,10 @@ export default function Header({ currentPage, navigate, darkMode, toggleDarkMode
     <nav className="fixed top-0 left-0 right-0 z-40 bg-brand-cream/90 dark:bg-brand-bgDark/90 backdrop-blur-md border-b border-brand-dark/10 dark:border-brand-cream/10 no-print transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          
+
           {/* Logo Section */}
-          <div 
-            onClick={() => handleNavClick('home')} 
+          <div
+            onClick={() => handleNavClick('home')}
             className="flex items-center gap-3 cursor-pointer select-none group"
           >
             <div className="bg-brand-gold text-brand-cream p-2 rounded-lg transition-transform duration-300 group-hover:scale-105">
@@ -40,7 +42,7 @@ export default function Header({ currentPage, navigate, darkMode, toggleDarkMode
           </div>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <button
                 key={link.id}
@@ -66,10 +68,39 @@ export default function Header({ currentPage, navigate, darkMode, toggleDarkMode
             >
               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
+
+            {/* User badge + Logout */}
+            {authUser && (
+              <div className="flex items-center gap-2 pl-2 border-l border-brand-dark/10 dark:border-brand-cream/10">
+                {/* Role badge */}
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                  authUser.role === 'admin'
+                    ? 'bg-brand-gold/15 text-brand-gold border border-brand-gold/30'
+                    : 'bg-brand-dark/8 text-brand-dark dark:text-brand-cream border border-brand-dark/15 dark:border-brand-cream/15'
+                }`}>
+                  {authUser.role === 'admin'
+                    ? <ShieldCheck className="w-3.5 h-3.5" />
+                    : <User className="w-3.5 h-3.5" />
+                  }
+                  <span className="capitalize">{authUser.username}</span>
+                </div>
+
+                {/* Logout */}
+                <button
+                  id="logout-btn"
+                  onClick={onLogout}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-red-300/60 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  aria-label="Logout"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Right Bar */}
-          <div className="flex items-center gap-4 md:hidden">
+          <div className="flex items-center gap-3 md:hidden">
             {/* Dark Mode Toggle (Mobile) */}
             <button
               onClick={toggleDarkMode}
@@ -109,6 +140,25 @@ export default function Header({ currentPage, navigate, darkMode, toggleDarkMode
                 {link.label}
               </button>
             ))}
+
+            {/* Mobile: User info + Logout */}
+            {authUser && (
+              <div className="pt-2 mt-2 border-t border-brand-dark/10 dark:border-brand-cream/10 flex items-center justify-between px-4">
+                <div className={`flex items-center gap-1.5 text-xs font-semibold ${
+                  authUser.role === 'admin' ? 'text-brand-gold' : 'text-brand-dark dark:text-brand-cream/70'
+                }`}>
+                  {authUser.role === 'admin' ? <ShieldCheck className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                  <span className="capitalize">{authUser.username} ({authUser.role})</span>
+                </div>
+                <button
+                  onClick={() => { onLogout(); setMobileMenuOpen(false); }}
+                  className="flex items-center gap-1.5 text-xs text-red-500 font-semibold px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

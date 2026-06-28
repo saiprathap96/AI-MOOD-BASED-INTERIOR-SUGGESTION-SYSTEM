@@ -1,7 +1,9 @@
 import React from 'react';
-import { Sparkles, ArrowRight, Settings, CheckSquare, Image, Star, Quote } from 'lucide-react';
+import { Sparkles, ArrowRight, Settings, CheckSquare, Image, Star, Quote, ShieldCheck, User } from 'lucide-react';
+import useAuth from '../hooks/useAuth';
 
 export default function Home({ navigate }) {
+  const { authUser } = useAuth();
   const steps = [
     {
       num: '01',
@@ -57,6 +59,21 @@ export default function Home({ navigate }) {
               <Sparkles className="w-3.5 h-3.5 animate-pulse" />
               <span>SVS AI Interior Suggestion Tool</span>
             </div>
+
+            {/* Personalised welcome */}
+            {authUser && (
+              <div className="inline-flex items-center gap-2 bg-white/80 dark:bg-brand-cardDark/80 border border-brand-gold/20 dark:border-brand-cream/10 px-4 py-2 rounded-full text-sm font-medium text-brand-dark dark:text-brand-cream shadow-sm animate-fade-in">
+                {authUser.role === 'admin'
+                  ? <ShieldCheck className="w-4 h-4 text-brand-gold" />
+                  : <User className="w-4 h-4 text-brand-gold" />}
+                <span>
+                  Welcome back, <span className="font-semibold text-brand-gold capitalize">{authUser.username}</span>
+                  {authUser.role === 'admin' && (
+                    <span className="ml-1 text-xs font-bold uppercase tracking-wider text-brand-gold/70">(Admin)</span>
+                  )}
+                </span>
+              </div>
+            )}
 
             {/* Title */}
             <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-brand-dark dark:text-brand-cream tracking-tight leading-[1.1] animate-slide-up">

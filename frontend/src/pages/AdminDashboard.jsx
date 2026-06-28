@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Star, Database, Flame, Clock, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, Star, Database, Flame, RefreshCw, ShieldCheck } from 'lucide-react';
 import api from '../utils/api';
 import useToast from '../hooks/useToast';
+import useAuth from '../hooks/useAuth';
 import { BarChart, DonutChart, LineChart } from '../components/AnalyticsCharts';
+import AccessDenied from '../components/AccessDenied';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ navigate }) {
   const { addToast } = useToast();
+  const { authUser } = useAuth();
   
   // Analytics States
   const [analytics, setAnalytics] = useState(null);
@@ -38,15 +41,25 @@ export default function AdminDashboard() {
     return analytics.popularRoomTypes[0].name;
   };
 
+  // ── Role guard ─────────────────────────────────────────────────────────
+  if (!authUser || authUser.role !== 'admin') {
+    return <AccessDenied navigate={navigate} />;
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-brand-dark/10 dark:border-brand-cream/10 pb-6">
         <div className="text-center sm:text-left space-y-1">
-          <h1 className="font-serif text-3xl font-bold text-brand-dark dark:text-brand-cream">
-            Analysis Dashboard
-          </h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="font-serif text-3xl font-bold text-brand-dark dark:text-brand-cream">
+              Analysis Dashboard
+            </h1>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-brand-gold/15 text-brand-gold border border-brand-gold/30 px-2 py-0.5 rounded-full">
+              <ShieldCheck className="w-3 h-3" /> Admin
+            </span>
+          </div>
           <p className="text-sm text-brand-textMuted">
             Monitor AI system performance, customer usage trends, and design quality ratings.
           </p>

@@ -1,18 +1,31 @@
 const API_BASE = '/api';
 
+/**
+ * Safe JSON parser — returns null instead of throwing on empty/invalid body.
+ */
+async function safeJson(response) {
+  const text = await response.text();
+  if (!text || !text.trim()) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.warn('Response body is not valid JSON:', text.slice(0, 200));
+    return null;
+  }
+}
+
 export const api = {
   // GET request
   get: async (url) => {
     try {
       const response = await fetch(`${API_BASE}${url}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
-      const result = await response.json();
+      const result = await safeJson(response);
       if (!response.ok) {
-        throw new Error(result.message || 'API request failed');
+        const msg = result?.message || result?.error || `Server error ${response.status}`;
+        throw new Error(msg);
       }
       return result;
     } catch (error) {
@@ -26,14 +39,13 @@ export const api = {
     try {
       const response = await fetch(`${API_BASE}${url}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      const result = await response.json();
+      const result = await safeJson(response);
       if (!response.ok) {
-        throw new Error(result.message || 'API request failed');
+        const msg = result?.message || result?.error || `Server error ${response.status}`;
+        throw new Error(msg);
       }
       return result;
     } catch (error) {
@@ -47,13 +59,12 @@ export const api = {
     try {
       const response = await fetch(`${API_BASE}${url}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
-      const result = await response.json();
+      const result = await safeJson(response);
       if (!response.ok) {
-        throw new Error(result.message || 'API request failed');
+        const msg = result?.message || result?.error || `Server error ${response.status}`;
+        throw new Error(msg);
       }
       return result;
     } catch (error) {
@@ -62,4 +73,5 @@ export const api = {
     }
   }
 };
+
 export default api;

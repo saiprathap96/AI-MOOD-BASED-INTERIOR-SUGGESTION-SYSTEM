@@ -63,8 +63,10 @@ export function BarChart({ data }) {
 export function DonutChart({ data }) {
   if (!data || data.length === 0) return <EmptyChartState />;
 
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  
+  // Normalise: backend sends { label, count }; some callers may use { label, value }
+  const normalised = data.map(d => ({ ...d, value: Number(d.count ?? d.value ?? 0) }));
+  const total = normalised.reduce((sum, item) => sum + item.value, 0);
+
   if (total === 0) return <EmptyChartState />;
 
   const radius = 55;
@@ -82,7 +84,7 @@ export function DonutChart({ data }) {
 
   let accumulatedPercent = 0;
 
-  const slices = data.map((item, idx) => {
+  const slices = normalised.map((item, idx) => {
     const percent = item.value / total;
     const strokeLength = percent * circ;
     const strokeOffset = circ - (accumulatedPercent * circ);
@@ -168,7 +170,8 @@ export function LineChart({ data }) {
   const points = data.map((item, idx) => {
     const x = paddingX + (idx / (data.length - 1)) * chartWidth;
     const y = paddingY + chartHeight - (item.count / maxVal) * chartHeight;
-    return { x, y, label: item.label, count: item.count };
+    // Support both item.date (backend) and item.label (legacy)
+    return { x, y, label: item.date || item.label || '', count: item.count ?? item.value ?? 0 };
   });
 
   // Construct SVG Path
