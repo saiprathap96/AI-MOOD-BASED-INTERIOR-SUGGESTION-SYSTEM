@@ -8,6 +8,9 @@ const db = require('./utils/db');
 const suggestionRoutes = require('./routes/suggestionRoutes');
 
 const app = express();
+app.get("/", (req, res) => {
+  res.send("Sri Venkata Sai Furniture Works backend is running.");
+});
 const PORT = process.env.PORT || 5000;
 
 // Enable Cross-Origin Resource Sharing (CORS)
